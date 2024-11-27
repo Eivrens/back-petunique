@@ -1,0 +1,18 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres17_container
+    ports:
+      - "5433:5432" # Mapeia a porta 5432 do host para o container
+    environment:
+      POSTGRES_USER: admin # Nome do usuário
+      POSTGRES_PASSWORD: admin # Senha
+      POSTGRES_DB: petunique # Nome do banco de dados inicial
+    volumes:
+      - petunique_data:/postgresql/data # Persistência de dados
+    networks:
+      - petunique_network
+
+volumes:
+  petunique_data:  # Volume para persistir os dados do banco

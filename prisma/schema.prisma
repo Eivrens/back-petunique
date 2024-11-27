@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Pet {
+  id            String    @id @default(uuid())
+  cod_microchip String    @db.VarChar(15)
+  name          String    @db.VarChar(20)
+  breed         String    @db.VarChar(15)
+  age           DateTime  @db.Date
+  color         String    @db.VarChar(20)
+  gender        Gender
+  species       Species
+  vaccines      Json?     @db.Json
+  castrated     Boolean
+  situation     Situation
+
+  tutor       Tutor?        @relation(fields: [tutorId], references: [id])
+  tutorId     String?       @unique
+  shelter     Shelter?      @relation(fields: [shelter_id], references: [id])
+  shelter_id  String?       @unique
+  procedure   Procedure[]
+  appointment Appointment[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("pets")
+}
+
+enum Situation {
+  ABANDONADO
+  ACOLHIDO
+  ADOTADO
+  DESAPARECIDO
+  FALECIDO
+}
+
+enum Species {
+  GATO
+  CACHORRO
+}
+
+model Tutor {
+  id       String   @id @default(uuid())
+  cpfCnpj  String   @db.VarChar(14)
+  fullName String   @db.VarChar(50)
+  dtBirth  DateTime @db.Date
+  gender   Gender
+  address  Json     @db.Json
+  phone    String   @db.VarChar(11)
+  email    String   @db.VarChar(40)
+
+  pets        Pet[]
+  login       Login?
+  appointment Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tutors")
+}
+
+model Login {
+  id           String      @id @default(uuid())
+  username     String      @unique @db.VarChar(50)
+  password     String      @db.VarChar(150)
+  account_type AccountType
+
+  user   Tutor  @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("logins")
+}
+
+enum AccountType {
+  HOSPITAL
+  DOCTOR
+  TUTOR
+  SHELTER
+}
+
+enum Gender {
+  M
+  F
+}
+
+model Shelter {
+  id      String @id @default(uuid())
+  cnpj    String @db.VarChar(14)
+  name    String @db.VarChar(50)
+  address Json   @db.Json
+  phone   String @db.VarChar(11)
+  email   String @db.VarChar(40)
+
+  pets      Pet[]
+  donations Donation[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("shelters")
+}
+
+model Hospital {
+  id           String @id @default(uuid())
+  company_name String @db.VarChar(60)
+  cnpj         String @db.VarChar(14)
+  type         String @db.Char(1)
+  address      Json   @db.Json
+  phone        String @db.VarChar(11)
+  email        String @db.VarChar(40)
+
+  procedures Procedure[]
+  doctors    Doctor[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("hospitals")
+}
+
+model Procedure {
+  id            String    @id @default(uuid())
+  procedure     String    @db.VarChar(15)
+  disease       String?   @db.VarChar(30)
+  vaccine       String?   @db.VarChar(30)
+  restriction   String?   @db.VarChar(100)
+  recurrence    Boolean   @default(false)
+  dt_recurrence DateTime? @db.Date
+  report        String    @db.VarChar(250)
+
+  pet         Pet       @relation(fields: [petId], references: [id])
+  petId       String    @unique
+  hospital    Hospital? @relation(fields: [hospital_id], references: [id])
+  hospital_id String?   @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("procedures")
+}
+
+model Doctor {
+  id    String @id @default(uuid())
+  name  String @db.VarChar(50)
+  crvm  String @db.VarChar(4)
+  State String @db.VarChar(2)
+
+  hospital    Hospital? @relation(fields: [hospital_id], references: [id])
+  hospital_id String?   @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("doctors")
+}
+
+model Donation {
+  id          String  @id @default(uuid())
+  code        String  @db.VarChar(10)
+  type        String  @db.Char(1)
+  value       Decimal @db.Decimal()
+  donor       String  @db.VarChar(30)
+  recipient   String  @db.VarChar(36)
+  description String  @db.VarChar(250)
+
+  shelter    Shelter? @relation(fields: [shelter_id], references: [id])
+  shelter_id String?  @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("donations")
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  time      DateTime @db.Time()
+  procedure String   @db.VarChar(15)
+
+  patient    Pet?    @relation(fields: [patient_id], references: [id])
+  patient_id String? @unique
+  author     Tutor?  @relation(fields: [author_id], references: [id])
+  author_id  String? @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("appointments")
+}
